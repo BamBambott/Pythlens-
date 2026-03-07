@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PythLens — Real-Time Oracle Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #03040a;
+    --surface: #080c18;
+    --surface2: #0d1226;
+    --border: rgba(100,180,255,0.12);
+    --accent: #00d4ff;
+    --accent2: #7b4fff;
+    --accent3: #ff6b35;
+    --green: #00ff9d;
+    --red: #ff4466;
+    --yellow: #ffcc00;
+    --text: #e8f4ff;
+    --muted: #5a7a9a;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* SCANLINE OVERLAY */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+  /* HEADER */
+  header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,255,157,0.08);
+    border: 1px solid rgba(0,255,157,0.2);
+    padding: 6px 14px;
+    border-radius: 2px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--green);
+  }
+
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,157,0.5); }
+    50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(0,255,157,0); }
+  }
+
+  .update-clock {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* HERO STRIP */
+  .hero {
+    padding: 40px 0 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 12px;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.8;
+    max-width: 600px;
+    letter-spacing: 0.5px;
+  }
+
+  /* MARKET STATUS BAR */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .status-bar::-webkit-scrollbar { display: none; }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 28px 0 0;
+    border-right: 1px solid var(--border);
+    margin-right: 28px;
+    white-space: nowrap;
+  }
+
+  .status-item:last-child { border-right: none; }
+
+  .status-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .status-val {
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .status-val.green { color: var(--green); }
+  .status-val.red { color: var(--red); }
+  .status-val.yellow { color: var(--yellow); }
+
+  /* FEEDS GRID */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px 0 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .filter-tab {
+    padding: 6px 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 2px;
+  }
+
+  .filter-tab:hover, .filter-tab.active {
+    background: rgba(0,212,255,0.08);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* FEED CARDS GRID */
+  .feeds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2px;
+    margin-bottom: 40px;
+  }
+
+  .feed-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    animation: cardIn 0.4s ease both;
+  }
+
+  .feed-card:hover {
+    background: var(--surface2);
+    border-color: rgba(0,212,255,0.3);
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Stress indicator strip on left */
+  .feed-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--green);
+    transition: background 0.3s;
+  }
+
+  .feed-card.stress-medium::before { background: var(--yellow); }
+  .feed-card.stress-high::before { background: var(--red); }
+
+  .feed-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .feed-symbol {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .feed-class {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.04);
+    padding: 3px 8px;
+    border-radius: 2px;
+    margin-top: 4px;
+  }
+
+  .feed-price-block { text-align: right; }
+
+  .feed-price {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .feed-change {
+    font-size: 11px;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .feed-change.up { color: var(--green); }
+  .feed-change.down { color: var(--red); }
+  .feed-change.flat { color: var(--muted); }
+
+  /* CONFIDENCE INTERVAL BAR */
+  .confidence-section {
+    margin-top: 16px;
+  }
+
+  .confidence-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .confidence-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .confidence-value {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  .confidence-bar-track {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .confidence-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--green);
+    transition: width 0.6s ease, background 0.3s;
+    min-width: 2px;
+  }
+
+  .confidence-bar-fill.medium { background: var(--yellow); }
+  .confidence-bar-fill.high { background: var(--red); }
+
+  .confidence-range {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* MINI SPARKLINE */
+  .sparkline-section {
+    margin-top: 14px;
+    height: 40px;
+    position: relative;
+  }
+
+  .sparkline-section canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* FEED META ROW */
+  .feed-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .feed-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .feed-meta-label {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .feed-meta-value {
+    font-size: 10px;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  /* STRESS BADGE */
+  .stress-badge {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  .stress-badge.low {
+    background: rgba(0,255,157,0.1);
+    color: var(--green);
+    border: 1px solid rgba(0,255,157,0.2);
+  }
+
+  .stress-badge.medium {
+    background: rgba(255,204,0,0.1);
+    color: var(--yellow);
+    border: 1px solid rgba(255,204,0,0.2);
+  }
+
+  .stress-badge.high {
+    background: rgba(255,68,102,0.1);
+    color: var(--red);
+    border: 1px solid rgba(255,68,102,0.2);
+    animation: stressPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes stressPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* DETAIL PANEL */
+  .detail-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 420px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 100;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    padding: 32px;
+  }
+
+  .detail-panel.open { transform: translateX(0); }
+
+  .detail-close {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .detail-close button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.15s;
+  }
+
+  .detail-close button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .detail-symbol {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .detail-price-big {
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+  }
+
+  .detail-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-bottom: 24px;
+  }
+
+  .detail-stat {
+    background: var(--surface2);
+    padding: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .detail-stat-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .detail-stat-val {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .detail-section-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    margin-top: 24px;
+  }
+
+  .confidence-explainer {
+    background: rgba(0,212,255,0.05);
+    border: 1px solid rgba(0,212,255,0.15);
+    padding: 16px;
+    border-radius: 2px;
+    font-size: 11px;
+    line-height: 1.8;
+    color: rgba(232,244,255,0.7);
+    margin-bottom: 20px;
+  }
+
+  .confidence-explainer strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* HISTORY CHART */
+  .history-chart-wrap {
+    height: 140px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 12px;
+    position: relative;
+  }
+
+  /* EDUCATION STRIP */
+  .edu-strip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 40px;
+    margin: 40px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .edu-strip::before {
+    content: 'HOW PYTH WORKS';
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    font-size: 9px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .edu-item { padding-top: 20px; }
+
+  .edu-num {
+    font-family: var(--font-display);
+    font-size: 48px;
+    font-weight: 800;
+    color: rgba(0,212,255,0.12);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .edu-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .edu-desc {
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--muted);
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  footer .left {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    line-height: 1.8;
+  }
+
+  footer .right {
+    display: flex;
+    gap: 20px;
+  }
+
+  footer a {
+    font-size: 10px;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: color 0.15s;
+  }
+
+  footer a:hover { color: var(--accent); }
+
+  /* LOADING STATE */
+  .loading-skeleton {
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 2px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* OVERLAY */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(3,4,10,0.7);
+    z-index: 99;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .overlay.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    padding: 12px 24px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    z-index: 200;
+    transition: transform 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (max-width: 600px) {
+    .feeds-grid { grid-template-columns: 1fr; }
+    .detail-panel { width: 100%; }
+    .edu-strip { padding: 28px; }
+    header { padding: 20px 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">PythLens</div>
+      <div class="logo-sub">Oracle Intelligence</div>
+    </div>
+    <div class="header-right">
+      <div class="update-clock" id="clock">--:--:-- UTC</div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        LIVE DATA
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Real-Time Market<br><span>Oracle Intelligence</span></h1>
+    <p>Powered by Pyth Network — 500+ institutional-grade price feeds with confidence intervals, sourced from 120+ first-party data providers. Built for the 2025 Pyth Community Hackathon.</p>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar" id="statusBar">
+    <div class="status-item">
+      <span class="status-label">Feeds Active</span>
+      <span class="status-val green" id="feedsActive">—</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Market Stress</span>
+      <span class="status-val" id="globalStress">—</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Avg Confidence</span>
+      <span class="status-val" id="avgConf">—</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Data Source</span>
+      <span class="status-val green">HERMES API</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Network</span>
+      <span class="status-val green">PYTHNET</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Last Update</span>
+      <span class="status-val" id="lastUpdate">—</span>
+    </div>
+  </div>
+
+  <!-- FEEDS SECTION -->
+  <div class="section-header">
+    <div class="section-title">// Price Feeds</div>
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-tab" onclick="setFilter('crypto', this)">Crypto</button>
+      <button class="filter-tab" onclick="setFilter('fx', this)">FX</button>
+      <button class="filter-tab" onclick="setFilter('equity', this)">Equities</button>
+      <button class="filter-tab" onclick="setFilter('commodity', this)">Commodities</button>
+    </div>
+  </div>
+
+  <div class="feeds-grid" id="feedsGrid">
+    <!-- cards injected by JS -->
+  </div>
+
+  <!-- EDUCATION STRIP -->
+  <div class="edu-strip">
+    <div class="edu-item">
+      <div class="edu-num">01</div>
+      <div class="edu-title">Pull Oracle Model</div>
+      <div class="edu-desc">Unlike push oracles that broadcast prices to all chains constantly, Pyth uses a pull model — apps fetch signed price updates from Hermes on demand. This reduces gas waste and keeps data fresh.</div>
+    </div>
+    <div class="edu-item">
+      <div class="edu-num">02</div>
+      <div class="edu-title">Confidence Intervals</div>
+      <div class="edu-desc">Every Pyth price comes with a ±confidence value representing uncertainty. A BTC price of $84,000 ±$12 means high conviction. A wide band like ±$800 signals market stress or low liquidity.</div>
+    </div>
+    <div class="edu-item">
+      <div class="edu-num">03</div>
+      <div class="edu-title">First-Party Data</div>
+      <div class="edu-desc">Pyth aggregates from 120+ institutional publishers — exchanges, market makers, prop trading firms — not derived from secondary sources. Each submits a price and their own confidence estimate.</div>
+    </div>
+    <div class="edu-item">
+      <div class="edu-num">04</div>
+      <div class="edu-title">Exponent Encoding</div>
+      <div class="edu-desc">Prices are stored as integers with a negative exponent. A raw price of 8400000000000 with expo -8 means $84,000.00. This allows fixed-point math without floating-point imprecision on-chain.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="left">
+      Built for Pyth Community Hackathon 2025<br>
+      Data via Pyth Hermes API · hermes.pyth.network · Apache 2.0
+    </div>
+    <div class="right">
+      <a href="https://docs.pyth.network" target="_blank">Docs</a>
+      <a href="https://pyth.network" target="_blank">Pyth Network</a>
+      <a href="https://dev-forum.pyth.network/c/pyth-hackathon/14" target="_blank">Hackathon</a>
+    </div>
+  </footer>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="overlay" id="overlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-close">
+    <span class="detail-symbol" id="detailSymbol">—</span>
+    <button onclick="closeDetail()">✕ CLOSE</button>
+  </div>
+  <div class="detail-price-big" id="detailPrice">—</div>
+  <div class="detail-stat-grid" id="detailStats"></div>
+  <div class="detail-section-title">// What is a Confidence Interval?</div>
+  <div class="confidence-explainer">
+    Pyth publishes a <strong>confidence interval</strong> alongside every price. This ± value reflects how much disagreement exists between data providers at that moment.<br><br>
+    A <strong>narrow band</strong> means high conviction — all publishers agree. A <strong>wide band</strong> signals stress: extreme volatility, exchange outages, or liquidity divergence.<br><br>
+    The <strong>stress score</strong> = confidence / price × 10,000 bps. Above 10bps = caution. Above 50bps = high stress.
+  </div>
+  <div class="detail-section-title">// Price History (session)</div>
+  <div class="history-chart-wrap">
+    <canvas id="historyCanvas"></canvas>
+  </div>
+  <div class="detail-section-title">// Feed Identity</div>
+  <div style="background: var(--surface2); border: 1px solid var(--border); padding: 14px; font-size: 10px; line-height: 2; color: var(--muted); word-break: break-all;" id="detailFeedId"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  PYTH FEED REGISTRY
+// ═══════════════════════════════════════════════
+const FEEDS = [
+  // CRYPTO
+  { id: '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43', symbol: 'BTC/USD', class: 'Crypto', icon: '₿' },
+  { id: '0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace', symbol: 'ETH/USD', class: 'Crypto', icon: 'Ξ' },
+  { id: '0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d', symbol: 'SOL/USD', class: 'Crypto', icon: '◎' },
+  { id: '0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f', symbol: 'BNB/USD', class: 'Crypto', icon: '⬡' },
+  { id: '0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a', symbol: 'USDC/USD', class: 'Crypto', icon: '$' },
+  { id: '0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8', symbol: 'XRP/USD', class: 'Crypto', icon: '✕' },
+  { id: '0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a394849c23c30f4f5c3be4a5c3a', symbol: 'DOGE/USD', class: 'Crypto', icon: 'Ð' },
+  { id: '0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7', symbol: 'AVAX/USD', class: 'Crypto', icon: '▲' },
+  // FX
+  { id: '0xa995d00bb36a63cef7fd2c287dc105fc8f3d93779f062f09551b0af3e81ec30', symbol: 'EUR/USD', class: 'FX', icon: '€' },
+  { id: '0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1', symbol: 'GBP/USD', class: 'FX', icon: '£' },
+  { id: '0xef2c98c804ba503c6a707e38be4dfbb16683bab87caf4a1a0f191a7be010853', symbol: 'USD/JPY', class: 'FX', icon: '¥' },
+  // EQUITIES
+  { id: '0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688', symbol: 'AAPL/USD', class: 'Equity', icon: '' },
+  { id: '0x42a7c7b08bdbe53fd1bae4be6bc6e741ba4e47e2a3cc0dbccc8b1285c34c1b5e', symbol: 'TSLA/USD', class: 'Equity', icon: '' },
+  // COMMODITY
+  { id: '0x765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2', symbol: 'XAU/USD', class: 'Commodity', icon: '◈' },
+  { id: '0xf2fb02c32b055c805e7238d628e5e9dadef274376114eb1f012337cabe93871e', symbol: 'XAG/USD', class: 'Commodity', icon: '◇' },
+  { id: '0x89a93a5e221578f87e5379eee4de5e5a4fcc1b7b9ca5efa29f1ba7c070c0fd6c', symbol: 'WTI/USD', class: 'Commodity', icon: '⬡' },
+];
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let feedData = {};
+let feedHistory = {};
+let currentFilter = 'all';
+let selectedFeed = null;
+let refreshInterval = null;
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function formatPrice(price, expo) {
+  const val = price * Math.pow(10, expo);
+  if (val >= 1000) return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (val >= 1) return val.toFixed(4);
+  return val.toFixed(6);
+}
+
+function formatConf(conf, price, expo) {
+  const confVal = conf * Math.pow(10, expo);
+  const priceVal = price * Math.pow(10, expo);
+  return '±' + confVal.toFixed(priceVal > 1 ? 2 : 6);
+}
+
+function getStressLevel(conf, price) {
+  const ratio = conf / price;
+  if (ratio < 0.001) return 'low';
+  if (ratio < 0.005) return 'medium';
+  return 'high';
+}
+
+function getStressBps(conf, price) {
+  return ((conf / price) * 10000).toFixed(1);
+}
+
+function ago(ts) {
+  const s = Math.floor(Date.now() / 1000) - ts;
+  if (s < 2) return 'just now';
+  if (s < 60) return s + 's ago';
+  return Math.floor(s / 60) + 'm ago';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toUTCString().split(' ')[4] + ' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ═══════════════════════════════════════════════
+//  FETCH FROM PYTH HERMES
+// ═══════════════════════════════════════════════
+async function fetchPrices() {
+  const ids = FEEDS.map(f => f.id);
+  const params = ids.map(id => `ids[]=${id}`).join('&');
+  const url = `https://hermes.pyth.network/v2/updates/price/latest?${params}&parsed=true`;
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+
+    data.parsed.forEach(item => {
+      const id = '0x' + item.id;
+      const prev = feedData[id];
+      feedData[id] = {
+        price: item.price.price,
+        conf: item.price.conf,
+        expo: item.price.expo,
+        publish_time: item.price.publish_time,
+        ema_price: item.ema_price.price,
+        ema_expo: item.ema_price.expo,
+        prev_price: prev ? prev.price : null,
+      };
+
+      // Store history
+      if (!feedHistory[id]) feedHistory[id] = [];
+      const priceVal = item.price.price * Math.pow(10, item.price.expo);
+      feedHistory[id].push({ t: Date.now(), v: priceVal });
+      if (feedHistory[id].length > 60) feedHistory[id].shift();
+    });
+
+    updateStatusBar();
+    renderCards();
+    if (selectedFeed) updateDetailPanel(selectedFeed);
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+
+  } catch (e) {
+    console.warn('Fetch error:', e);
+    // Fall back to simulated data
+    simulateData();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  SIMULATION FALLBACK (if CORS or offline)
+// ═══════════════════════════════════════════════
+const BASE_PRICES = {
+  'BTC/USD': 84000, 'ETH/USD': 3200, 'SOL/USD': 148, 'BNB/USD': 580,
+  'USDC/USD': 1.0001, 'XRP/USD': 0.52, 'DOGE/USD': 0.089, 'AVAX/USD': 35,
+  'EUR/USD': 1.082, 'GBP/USD': 1.263, 'USD/JPY': 149.4,
+  'AAPL/USD': 228, 'TSLA/USD': 265,
+  'XAU/USD': 2940, 'XAG/USD': 33.4, 'WTI/USD': 78.2,
+};
+
+let simInitialized = false;
+
+function simulateData() {
+  FEEDS.forEach(feed => {
+    const base = BASE_PRICES[feed.symbol] || 100;
+    const prev = feedData[feed.id];
+    const prevPrice = prev ? (prev.price * Math.pow(10, prev.expo)) : base;
+
+    const change = prevPrice * (0.9997 + Math.random() * 0.0006);
+    const expo = base >= 1000 ? -8 : base >= 1 ? -8 : -10;
+    const rawPrice = Math.round(change / Math.pow(10, expo));
+    const stressMulti = Math.random() < 0.05 ? (5 + Math.random() * 20) : 1;
+    const rawConf = Math.round((rawPrice * (0.0001 + Math.random() * 0.0003)) * stressMulti);
+
+    feedData[feed.id] = {
+      price: rawPrice,
+      conf: rawConf,
+      expo: expo,
+      publish_time: Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 3),
+      ema_price: rawPrice,
+      ema_expo: expo,
+      prev_price: prev ? prev.price : null,
+    };
+
+    if (!feedHistory[feed.id]) feedHistory[feed.id] = [];
+    feedHistory[feed.id].push({ t: Date.now(), v: change });
+    if (feedHistory[feed.id].length > 60) feedHistory[feed.id].shift();
+  });
+
+  if (!simInitialized) {
+    simInitialized = true;
+    showToast('⚠ Using simulated data — CORS blocked in browser');
+  }
+
+  updateStatusBar();
+  renderCards();
+  if (selectedFeed) updateDetailPanel(selectedFeed);
+  document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString() + ' (sim)';
+}
+
+// ═══════════════════════════════════════════════
+//  STATUS BAR
+// ═══════════════════════════════════════════════
+function updateStatusBar() {
+  const active = Object.keys(feedData).length;
+  document.getElementById('feedsActive').textContent = active;
+
+  let totalStress = 0;
+  let stressCount = 0;
+  let highStressCount = 0;
+
+  FEEDS.forEach(feed => {
+    const d = feedData[feed.id];
+    if (!d) return;
+    const ratio = d.conf / d.price;
+    totalStress += ratio;
+    stressCount++;
+    if (ratio >= 0.005) highStressCount++;
+  });
+
+  const avgBps = stressCount ? ((totalStress / stressCount) * 10000).toFixed(1) : '—';
+  document.getElementById('avgConf').textContent = avgBps + ' bps';
+
+  const stressEl = document.getElementById('globalStress');
+  if (highStressCount >= 3) {
+    stressEl.textContent = 'HIGH (' + highStressCount + ')';
+    stressEl.className = 'status-val red';
+  } else if (highStressCount >= 1) {
+    stressEl.textContent = 'MODERATE (' + highStressCount + ')';
+    stressEl.className = 'status-val yellow';
+  } else {
+    stressEl.textContent = 'NORMAL';
+    stressEl.className = 'status-val green';
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  FILTER
+// ═══════════════════════════════════════════════
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards();
+}
+
+function getFilteredFeeds() {
+  if (currentFilter === 'all') return FEEDS;
+  const map = { crypto: 'Crypto', fx: 'FX', equity: 'Equity', commodity: 'Commodity' };
+  return FEEDS.filter(f => f.class === map[currentFilter]);
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER CARDS
+// ═══════════════════════════════════════════════
+function renderCards() {
+  const grid = document.getElementById('feedsGrid');
+  const feeds = getFilteredFeeds();
+
+  feeds.forEach((feed, i) => {
+    const d = feedData[feed.id];
+    const existingCard = document.getElementById('card-' + feed.id.slice(2, 10));
+
+    if (!d) {
+      if (!existingCard) {
+        const card = document.createElement('div');
+        card.id = 'card-' + feed.id.slice(2, 10);
+        card.className = 'feed-card';
+        card.style.animationDelay = (i * 40) + 'ms';
+        card.innerHTML = `<div style="height:120px" class="loading-skeleton"></div>`;
+        grid.appendChild(card);
+      }
+      return;
+    }
+
+    const priceVal = d.price * Math.pow(10, d.expo);
+    const confVal = d.conf * Math.pow(10, d.expo);
+    const stress = getStressLevel(d.conf, d.price);
+    const bps = getStressBps(d.conf, d.price);
+    const confPct = Math.min((d.conf / d.price) * 2000, 100);
+
+    // Price change
+    let changeHTML = '';
+    if (d.prev_price !== null && d.prev_price !== d.price) {
+      const prevVal = d.prev_price * Math.pow(10, d.expo);
+      const chg = ((priceVal - prevVal) / prevVal) * 100;
+      const dir = chg >= 0 ? 'up' : 'down';
+      const sign = chg >= 0 ? '+' : '';
+      changeHTML = `<div class="feed-change ${dir}">${sign}${chg.toFixed(4)}%</div>`;
+    } else {
+      changeHTML = `<div class="feed-change flat">—</div>`;
+    }
+
+    const html = `
+      <div class="feed-card-top">
+        <div>
+          <div class="feed-symbol">${feed.symbol}</div>
+          <div class="feed-class">${feed.class}</div>
+        </div>
+        <div class="feed-price-block">
+          <div class="feed-price">$${formatPrice(d.price, d.expo)}</div>
+          ${changeHTML}
+        </div>
+      </div>
+      <div class="confidence-section">
+        <div class="confidence-label-row">
+          <span class="confidence-label">Confidence Interval</span>
+          <span class="confidence-value">${formatConf(d.conf, d.price, d.expo)}</span>
+        </div>
+        <div class="confidence-bar-track">
+          <div class="confidence-bar-fill ${stress === 'low' ? '' : stress}" style="width:${confPct}%"></div>
+        </div>
+        <div class="confidence-range">
+          <span>$${formatPrice(d.price - d.conf, d.expo)}</span>
+          <span>$${formatPrice(d.price + d.conf, d.expo)}</span>
+        </div>
+      </div>
+      <div class="feed-meta">
+        <div class="feed-meta-item">
+          <span class="feed-meta-label">Stress (bps)</span>
+          <span class="feed-meta-value">${bps}</span>
+        </div>
+        <div class="feed-meta-item">
+          <span class="feed-meta-label">Published</span>
+          <span class="feed-meta-value">${ago(d.publish_time)}</span>
+        </div>
+        <div class="stress-badge ${stress}">${stress.toUpperCase()}</div>
+      </div>
+    `;
+
+    if (existingCard) {
+      // Only update if in current filtered view
+      existingCard.className = `feed-card ${stress === 'medium' ? 'stress-medium' : stress === 'high' ? 'stress-high' : ''}`;
+      existingCard.innerHTML = html;
+      existingCard.onclick = () => openDetail(feed.id);
+    } else {
+      const card = document.createElement('div');
+      card.id = 'card-' + feed.id.slice(2, 10);
+      card.className = `feed-card ${stress === 'medium' ? 'stress-medium' : stress === 'high' ? 'stress-high' : ''}`;
+      card.style.animationDelay = (i * 40) + 'ms';
+      card.innerHTML = html;
+      card.onclick = () => openDetail(feed.id);
+      grid.appendChild(card);
+    }
+  });
+
+  // Remove cards not in current filter
+  const currentIds = feeds.map(f => 'card-' + f.id.slice(2, 10));
+  Array.from(grid.children).forEach(child => {
+    if (!currentIds.includes(child.id)) child.remove();
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  DETAIL PANEL
+// ═══════════════════════════════════════════════
+function openDetail(feedId) {
+  selectedFeed = feedId;
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('detailPanel').classList.add('open');
+  updateDetailPanel(feedId);
+}
+
+function closeDetail() {
+  selectedFeed = null;
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+function updateDetailPanel(feedId) {
+  const feed = FEEDS.find(f => f.id === feedId);
+  const d = feedData[feedId];
+  if (!feed || !d) return;
+
+  document.getElementById('detailSymbol').textContent = feed.symbol;
+
+  const priceVal = d.price * Math.pow(10, d.expo);
+  const confVal = d.conf * Math.pow(10, d.expo);
+  const stress = getStressLevel(d.conf, d.price);
+  const bps = getStressBps(d.conf, d.price);
+  const emaVal = d.ema_price * Math.pow(10, d.ema_expo);
+
+  document.getElementById('detailPrice').textContent = '$' + formatPrice(d.price, d.expo);
+
+  document.getElementById('detailStats').innerHTML = `
+    <div class="detail-stat">
+      <div class="detail-stat-label">Confidence ±</div>
+      <div class="detail-stat-val" style="font-size:14px">${formatConf(d.conf, d.price, d.expo)}</div>
+    </div>
+    <div class="detail-stat">
+      <div class="detail-stat-label">Stress Score</div>
+      <div class="detail-stat-val" style="color:${stress === 'low' ? 'var(--green)' : stress === 'medium' ? 'var(--yellow)' : 'var(--red)'}">${bps} bps</div>
+    </div>
+    <div class="detail-stat">
+      <div class="detail-stat-label">EMA Price</div>
+      <div class="detail-stat-val" style="font-size:14px">$${formatPrice(d.ema_price, d.ema_expo)}</div>
+    </div>
+    <div class="detail-stat">
+      <div class="detail-stat-label">Exponent</div>
+      <div class="detail-stat-val">${d.expo}</div>
+    </div>
+    <div class="detail-stat">
+      <div class="detail-stat-label">Lower Bound</div>
+      <div class="detail-stat-val" style="font-size:13px;color:var(--red)">$${formatPrice(d.price - d.conf, d.expo)}</div>
+    </div>
+    <div class="detail-stat">
+      <div class="detail-stat-label">Upper Bound</div>
+      <div class="detail-stat-val" style="font-size:13px;color:var(--green)">$${formatPrice(d.price + d.conf, d.expo)}</div>
+    </div>
+  `;
+
+  document.getElementById('detailFeedId').innerHTML =
+    `<span style="color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-size:8px">Feed ID:</span><br>
+     <span style="color:var(--accent);word-break:break-all">${feedId}</span><br><br>
+     <span style="color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-size:8px">Published:</span>
+     <span style="color:var(--text);margin-left:8px">${ago(d.publish_time)}</span>`;
+
+  drawHistory(feedId);
+}
+
+function drawHistory(feedId) {
+  const canvas = document.getElementById('historyCanvas');
+  const ctx = canvas.getContext('2d');
+  const history = feedHistory[feedId] || [];
+
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const W = canvas.offsetWidth;
+  const H = canvas.offsetHeight;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (history.length < 2) {
+    ctx.fillStyle = 'rgba(90,122,154,0.4)';
+    ctx.font = '10px Space Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('Collecting data...', W / 2, H / 2);
+    return;
+  }
+
+  const vals = history.map(h => h.v);
+  const min = Math.min(...vals) * 0.9999;
+  const max = Math.max(...vals) * 1.0001;
+  const range = max - min || 1;
+
+  const points = history.map((h, i) => ({
+    x: (i / (history.length - 1)) * W,
+    y: H - ((h.v - min) / range) * H * 0.8 - H * 0.1,
+  }));
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(0,212,255,0.2)');
+  grad.addColorStop(1, 'rgba(0,212,255,0)');
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, H);
+  points.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(points[points.length - 1].x, H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  points.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = 'rgba(0,212,255,0.8)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Last point dot
+  const last = points[points.length - 1];
+  ctx.beginPath();
+  ctx.arc(last.x, last.y, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#00d4ff';
+  ctx.fill();
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+async function init() {
+  // First fetch
+  await fetchPrices();
+
+  // Refresh every 3 seconds
+  refreshInterval = setInterval(fetchPrices, 3000);
+}
+
+init();
+</script>
+</body>
+</html>
