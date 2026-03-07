@@ -8,20 +8,20 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #060501;
-  --surface: #0c0a02;
-  --surface2: #131005;
-  --surface3: #1a1508;
-  --border: rgba(255,180,0,0.1);
-  --border2: rgba(255,180,0,0.2);
-  --gold: #ffb400;
-  --gold2: #ff8c00;
-  --gold-dim: rgba(255,180,0,0.15);
-  --green: #39ff85;
-  --red: #ff3a5c;
-  --blue: #00c8ff;
-  --text: #f0e4c0;
-  --muted: #7a6840;
+  --bg: #0a0812;
+  --surface: #100d1a;
+  --surface2: #161222;
+  --surface3: #1d1830;
+  --border: rgba(109,40,217,0.15);
+  --border2: rgba(109,40,217,0.28);
+  --gold: #9b59f5;
+  --gold2: #7c3aed;
+  --gold-dim: rgba(109,40,217,0.15);
+  --green: #34d399;
+  --red: #f87171;
+  --blue: #a78bfa;
+  --text: #ede9fe;
+  --muted: #6d5a9e;
   --font: 'IBM Plex Mono', monospace;
   --font-display: 'Bebas Neue', sans-serif;
 }
@@ -55,8 +55,8 @@ body::after {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255,180,0,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,180,0,0.025) 1px, transparent 1px);
+    linear-gradient(rgba(109,40,217,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(109,40,217,0.04) 1px, transparent 1px);
   background-size: 48px 48px;
   pointer-events: none;
   z-index: 0;
@@ -1041,55 +1041,40 @@ header {
 // FEEDS REGISTRY — 28 feeds
 // ═══════════════════════════════════════
 const FEEDS = [
-  // CRYPTO
+  // CRYPTO — verified feed IDs
   {id:'0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43',sym:'BTC/USD',cls:'Crypto'},
   {id:'0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',sym:'ETH/USD',cls:'Crypto'},
   {id:'0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',sym:'SOL/USD',cls:'Crypto'},
   {id:'0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f',sym:'BNB/USD',cls:'Crypto'},
   {id:'0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a',sym:'USDC/USD',cls:'Crypto'},
+  {id:'0x41f3625971ca2ed2263e78573fe5ce23e13d2558ed3f2e47ab0f84fb9e7ae722',sym:'USDT/USD',cls:'Crypto'},
   {id:'0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8',sym:'XRP/USD',cls:'Crypto'},
-  {id:'0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a394849c23c30f4f5c3be4a5c3a',sym:'DOGE/USD',cls:'Crypto'},
   {id:'0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7',sym:'AVAX/USD',cls:'Crypto'},
   {id:'0x8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221',sym:'LINK/USD',cls:'Crypto'},
-  {id:'0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52',sym:'MATIC/USD',cls:'Crypto'},
-  {id:'0x385f64d993f7b77d8182ed5003d97c60aa3361f3cecfe711544d2d59165e9bdf',sym:'OP/USD',cls:'Crypto'},
-  {id:'0x09f7c1d7dfbb7df2b8fe3d3d87ee94a2259d212da4f30c1f0540d066dfa44723',sym:'ARB/USD',cls:'Crypto'},
-  // FX
-  {id:'0xa995d00bb36a63cef7fd2c287dc105fc8f3d93779f062f09551b0af3e81ec30',sym:'EUR/USD',cls:'FX'},
+  {id:'0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744',sym:'SUI/USD',cls:'Crypto'},
+  {id:'0x67aed5a24fdaa045e4de73a35d72274976af84f4b32e84d456a91ea40e33b62a',sym:'APT/USD',cls:'Crypto'},
+  {id:'0xb00b60f88b03a6a625a8d1c048c3f66653edf217439983d037e7222c4e612819',sym:'ATOM/USD',cls:'Crypto'},
+  {id:'0x6489800bb8974169adfe35937bf6736507097d13c190d760c557108c7e93a81b',sym:'DOT/USD',cls:'Crypto'},
+  {id:'0xca3eed9b267293f6595901c734c7525ce8ef49adafe8284606ceb307afa2ca5b',sym:'LTC/USD',cls:'Crypto'},
+  {id:'0x3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5',sym:'POL/USD',cls:'Crypto'},
+  // FX — verified
   {id:'0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1',sym:'GBP/USD',cls:'FX'},
-  {id:'0xef2c98c804ba503c6a707e38be4dfbb16683bab87caf4a1a0f191a7be010853',sym:'USD/JPY',cls:'FX'},
-  {id:'0x67a6f93030420c1c9e3fe37c1ab6b77966af82f995944a9fefce357a22854a80',sym:'USD/CHF',cls:'FX'},
-  {id:'0x7d17b9fe4ea7103be16b6836984fabbc889386d700ca5e5b3d34b7f92e449268',sym:'AUD/USD',cls:'FX'},
-  // EQUITIES
-  {id:'0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688',sym:'AAPL/USD',cls:'Equity'},
-  {id:'0x42a7c7b08bdbe53fd1bae4be6bc6e741ba4e47e2a3cc0dbccc8b1285c34c1b5e',sym:'TSLA/USD',cls:'Equity'},
-  {id:'0x3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5',sym:'AMZN/USD',cls:'Equity'},
-  {id:'0xd0ca23c1cc005e004ccf1db5bf76aeb6a49218f43dac3d4b275e92de12ded4d1',sym:'GOOGL/USD',cls:'Equity'},
-  {id:'0xd2c2c1f2bba8e0964f9589e060c2ee97f5e19057267ac3284caef3bd50bd2cb5',sym:'MSFT/USD',cls:'Equity'},
-  // COMMODITIES
+  {id:'0x1fc18861232290221461220bd4e2acd1dcdfbc89c84092c93c18bdc7756c1588',sym:'USD/CHF',cls:'FX'},
+  {id:'0x06a7b0690cf93b9e96dd17a17a41ecdb8e1f88092deef39df2d21d0f0a50ba60',sym:'AUD/USD',cls:'FX'},
+  {id:'0x94bce4aee88fdfa5b58d81090bd6b3784717fa6df85419d9f04433bb3d615d5f',sym:'USD/CAD',cls:'FX'},
+  // COMMODITIES — verified
   {id:'0x765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2',sym:'XAU/USD',cls:'Commodity'},
   {id:'0xf2fb02c32b055c805e7238d628e5e9dadef274376114eb1f012337cabe93871e',sym:'XAG/USD',cls:'Commodity'},
-  {id:'0x89a93a5e221578f87e5379eee4de5e5a4fcc1b7b9ca5efa29f1ba7c070c0fd6c',sym:'WTI/USD',cls:'Commodity'},
-  {id:'0x7f5cc8d963fc5b3d2ae41fe5685ada89fd4d9d0576cfd5c735ce3b7ccf5fea5a',sym:'BRENT/USD',cls:'Commodity'},
-  {id:'0x5c6c0d2386e3352356c3ab84434fafb5ea067ac2678a38a338c4a69ddc4bdb0c',sym:'ETH/BTC',cls:'Crypto'},
-  {id:'0x8f218655050a1476b780185e89f19d2b1e1f49e9bd629efad6ac547a946bf6ab',sym:'BNB/BTC',cls:'Crypto'},
 ];
 
 // BASE PRICES for simulation
 const BASE = {
-  // Crypto — March 2026 prices
   'BTC/USD':68300,'ETH/USD':1980,'SOL/USD':85,'BNB/USD':630,
-  'USDC/USD':1.0001,'XRP/USD':1.37,'DOGE/USD':0.092,'AVAX/USD':22,
-  'LINK/USD':11.2,'MATIC/USD':0.31,'OP/USD':0.84,'ARB/USD':0.41,
-  // FX
-  'EUR/USD':1.085,'GBP/USD':1.268,'USD/JPY':148.2,'USD/CHF':0.891,
-  'AUD/USD':0.628,
-  // Equities
-  'AAPL/USD':218,'TSLA/USD':248,'AMZN/USD':188,'GOOGL/USD':162,'MSFT/USD':398,
-  // Commodities
-  'XAU/USD':2920,'XAG/USD':32.8,'WTI/USD':72.4,'BRENT/USD':76.2,
-  // Pairs
-  'ETH/BTC':0.029,'BNB/BTC':0.0092,
+  'USDC/USD':1.0001,'USDT/USD':1.0002,'XRP/USD':1.37,'AVAX/USD':22,
+  'LINK/USD':11.2,'SUI/USD':2.8,'APT/USD':6.4,'ATOM/USD':4.2,
+  'DOT/USD':4.8,'LTC/USD':82,'POL/USD':0.22,
+  'GBP/USD':1.268,'USD/CHF':0.891,'AUD/USD':0.628,'USD/CAD':1.435,
+  'XAU/USD':2920,'XAG/USD':32.8,
 };
 
 let data = {}, history = {}, filter = 'all', selectedId = null;
