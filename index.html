@@ -1104,17 +1104,27 @@ function switchTab(id, btn) {
 // FETCH / SIMULATE
 // ═══════════════════════════════════════
 async function fetchAll() {
-  // Use our Vercel proxy — avoids browser CORS issues with Hermes
-  const url = '/api/prices';
-  try {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error();
-    const d = await r.json();
-    if (!d.success) throw new Error(d.error);
-    // Mark as live data
-    document.getElementById('dataSourceBadge').textContent = 'PYTH LIVE';
-    document.getElementById('dataSourceBadge').style.color = 'var(--green)';
-    d.parsed.forEach(item => {
+  // Try our Vercel proxy first, then direct, then CORS proxy
+  const HERMES = 'https://hermes.pyth.network/v2/updates/price/latest?parsed=true&' +
+    FEEDS.map(f => 'ids[]=' + f.id).join('&');
+
+  const attempts = [
+    '/api/prices',
+    'https://corsproxy.io/?' + encodeURIComponent(HERMES),
+  ];
+
+  for (const url of attempts) {
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      if (!r.ok) continue;
+      const d = await r.json();
+      const parsed = d.parsed || (d.success && d.parsed);
+      if (!parsed) continue;
+
+      document.getElementById('dataSourceBadge').textContent = 'PYTH LIVE';
+      document.getElementById('dataSourceBadge').style.color = 'var(--green)';
+
+      parsed.forEach(item => {
       const id = '0x' + item.id;
       const prev = data[id];
       data[id] = {
@@ -1125,12 +1135,18 @@ async function fetchAll() {
       };
       pushHistory(id, item.price.price * Math.pow(10, item.price.expo));
     });
-    document.getElementById('sTime').textContent = new Date().toLocaleTimeString();
-  } catch {
-    document.getElementById('dataSourceBadge').textContent = 'SIMULATED';
-    document.getElementById('dataSourceBadge').style.color = 'var(--gold)';
-    simulate();
+      document.getElementById('sTime').textContent = new Date().toLocaleTimeString();
+      updateStatus();
+      renderCards();
+      if (selectedId) updateDetail(selectedId);
+      return; // success — stop trying
+    } catch { continue; }
   }
+
+  // All attempts failed — use simulation
+  document.getElementById('dataSourceBadge').textContent = 'SIMULATED';
+  document.getElementById('dataSourceBadge').style.color = 'var(--gold)';
+  simulate();
   updateStatus();
   renderCards();
   if (selectedId) updateDetail(selectedId);
