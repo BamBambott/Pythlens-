@@ -4,6 +4,6 @@
   "description": "Real-time Pyth Network price feed explorer with confidence interval stress detection",
   "license": "Apache-2.0",
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   }
 }
