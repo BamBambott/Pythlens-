@@ -83,7 +83,7 @@ header {
 
 .logo-text {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 20px;
   letter-spacing: 2px;
   color: var(--gold);
 }
@@ -387,11 +387,11 @@ header {
 }
 
 .fc-name-wrap { padding-left: 12px; }
-.fc-sym { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
+.fc-sym { font-size: 12px; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
 .fc-cls { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
-.fc-price { font-size: 14px; font-weight: 600; color: var(--text); text-align: right; font-family: var(--font); }
-.fc-chg { font-size: 13px; font-weight: 700; text-align: right; padding: 3px 8px; border-radius: 4px; display: inline-block; }
+.fc-price { font-size: 12px; font-weight: 600; color: var(--text); text-align: right; font-family: var(--font); }
+.fc-chg { font-size: 11px; font-weight: 700; text-align: right; padding: 3px 8px; border-radius: 4px; display: inline-block; }
 .fc-chg.up { color: #10b981; background: rgba(16,185,129,0.1); }
 .fc-chg.dn { color: #ef4444; background: rgba(239,68,68,0.1); }
 .fc-chg.fl { color: var(--muted); background: transparent; }
@@ -1353,33 +1353,50 @@ function filtered() {
 // ═══════════════════════════════════════
 // RENDER CARDS
 // ═══════════════════════════════════════
-// Coin icon colors & symbols map
-const COIN_META = {
-  'BTC': {color:'#F7931A',bg:'rgba(247,147,26,0.15)',icon:'₿'},
-  'ETH': {color:'#627EEA',bg:'rgba(98,126,234,0.15)',icon:'Ξ'},
-  'SOL': {color:'#9945FF',bg:'rgba(153,69,255,0.15)',icon:'◎'},
-  'BNB': {color:'#F3BA2F',bg:'rgba(243,186,47,0.15)',icon:'B'},
-  'XRP': {color:'#00AAE4',bg:'rgba(0,170,228,0.15)',icon:'X'},
-  'USDC':{color:'#2775CA',bg:'rgba(39,117,202,0.15)',icon:'$'},
-  'USDT':{color:'#26A17B',bg:'rgba(38,161,123,0.15)',icon:'₮'},
-  'AVAX':{color:'#E84142',bg:'rgba(232,65,66,0.15)',icon:'A'},
-  'LINK':{color:'#2A5ADA',bg:'rgba(42,90,218,0.15)',icon:'⬡'},
-  'SUI': {color:'#4DA2FF',bg:'rgba(77,162,255,0.15)',icon:'S'},
-  'ATOM':{color:'#6F7390',bg:'rgba(111,115,144,0.15)',icon:'⚛'},
-  'DOT': {color:'#E6007A',bg:'rgba(230,0,122,0.15)',icon:'●'},
-  'LTC': {color:'#BFBBBB',bg:'rgba(191,187,187,0.15)',icon:'Ł'},
-  'POL': {color:'#8247E5',bg:'rgba(130,71,229,0.15)',icon:'P'},
-  'APT': {color:'#00BFA5',bg:'rgba(0,191,165,0.15)',icon:'A'},
-  'GBP': {color:'#CF3064',bg:'rgba(207,48,100,0.15)',icon:'£'},
-  'EUR': {color:'#003399',bg:'rgba(0,51,153,0.15)',icon:'€'},
-  'XAU': {color:'#FFD700',bg:'rgba(255,215,0,0.15)',icon:'Au'},
-  'XAG': {color:'#C0C0C0',bg:'rgba(192,192,192,0.15)',icon:'Ag'},
-  'default':{color:'#9b59f5',bg:'rgba(155,89,245,0.15)',icon:'◆'},
+// Real token logo URLs from CoinGecko CDN
+const COIN_LOGOS = {
+  'BTC':  'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+  'ETH':  'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+  'SOL':  'https://assets.coingecko.com/coins/images/4128/small/solana.png',
+  'BNB':  'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+  'XRP':  'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
+  'USDC': 'https://assets.coingecko.com/coins/images/6319/small/usdc.png',
+  'USDT': 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
+  'AVAX': 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
+  'LINK': 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
+  'SUI':  'https://assets.coingecko.com/coins/images/26375/small/sui_asset.jpeg',
+  'ATOM': 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png',
+  'DOT':  'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
+  'LTC':  'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
+  'POL':  'https://assets.coingecko.com/coins/images/32440/small/polygon.png',
+  'APT':  'https://assets.coingecko.com/coins/images/26455/small/aptos_round.png',
+  'DOGE': 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
+  'XAU':  'https://assets.coingecko.com/coins/images/14549/small/gold.png',
+  'XAG':  'https://assets.coingecko.com/coins/images/14950/small/silver.png',
 };
 
-function getCoinMeta(sym) {
+// Fallback colors if logo fails to load
+const COIN_COLORS = {
+  'BTC':'#F7931A','ETH':'#627EEA','SOL':'#9945FF','BNB':'#F3BA2F',
+  'XRP':'#00AAE4','USDC':'#2775CA','USDT':'#26A17B','AVAX':'#E84142',
+  'LINK':'#2A5ADA','SUI':'#4DA2FF','ATOM':'#6F7390','DOT':'#E6007A',
+  'LTC':'#BFBBBB','POL':'#8247E5','APT':'#00BFA5','DOGE':'#C2A633',
+  'XAU':'#FFD700','XAG':'#C0C0C0','GBP':'#CF3064','EUR':'#003399',
+  'default':'#6d28d9',
+};
+
+function getCoinIcon(sym) {
   const base = sym.split('/')[0];
-  return COIN_META[base] || COIN_META['default'];
+  const logo = COIN_LOGOS[base];
+  const color = COIN_COLORS[base] || COIN_COLORS['default'];
+  const initials = base.slice(0,2);
+  if (logo) {
+    return `<img src="${logo}" width="32" height="32" style="border-radius:50%;object-fit:cover;"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+      alt="${base}">
+      <div style="display:none;width:32px;height:32px;border-radius:50%;background:${color}20;color:${color};font-size:11px;font-weight:700;align-items:center;justify-content:center;font-family:sans-serif">${initials}</div>`;
+  }
+  return `<div style="width:32px;height:32px;border-radius:50%;background:${color}20;color:${color};font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:sans-serif">${initials}</div>`;
 }
 
 function miniSparkline(id) {
@@ -1431,8 +1448,6 @@ function renderCards() {
     const cv = d.conf * Math.pow(10, d.expo);
     const st = stress(d.conf, d.price);
     const bps = stressBps(d.conf, d.price);
-    const meta = getCoinMeta(feed.sym);
-
     // 24h change using stored 24h baseline
     let chgHTML = '<span class="fc-chg fl">—</span>';
     const base24 = d24h[feed.id];
@@ -1451,7 +1466,7 @@ function renderCards() {
 
     card.className = `feed-card${st === 'med' ? ' stress-med' : st === 'hi' ? ' stress-hi' : ''}`;
     card.innerHTML = `
-      <div class="fc-icon" style="background:${meta.bg};color:${meta.color}">${meta.icon}</div>
+      <div class="fc-icon">${getCoinIcon(feed.sym)}</div>
       <div class="fc-name-wrap">
         <div class="fc-sym">${feed.sym}</div>
         <div class="fc-cls">${feed.cls}</div>
