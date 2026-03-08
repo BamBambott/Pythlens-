@@ -347,71 +347,74 @@ header {
   background: var(--gold-dim);
 }
 
-/* ── FEEDS GRID ── */
+/* ── FEEDS TABLE ── */
 .feeds-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1px;
-  background: var(--border);
+  width: 100%;
   margin-bottom: 2px;
 }
 
+/* Table header */
+.feeds-header {
+  display: grid;
+  grid-template-columns: 36px 1fr 110px 90px 90px 80px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border2);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+@media(max-width:600px) {
+  .feeds-header { grid-template-columns: 36px 1fr 100px 80px; }
+  .feeds-header .hide-sm, .feed-card .hide-sm { display: none; }
+}
+
 .feed-card {
-  background: var(--surface);
-  padding: 20px;
+  display: grid;
+  grid-template-columns: 36px 1fr 110px 90px 90px 80px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.12s;
   position: relative;
-  overflow: hidden;
   animation: fadeUp 0.3s ease both;
+}
+@media(max-width:600px) {
+  .feed-card { grid-template-columns: 36px 1fr 100px 80px; }
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .feed-card:hover { background: var(--surface2); }
+.feed-card.stress-hi { border-left: 2px solid var(--red); }
+.feed-card.stress-med { border-left: 2px solid var(--gold); }
 
-.feed-card::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--green);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s;
+/* coin icon circle */
+.fc-icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: 0;
+  flex-shrink: 0;
 }
 
-.feed-card:hover::after { transform: scaleX(1); }
-.feed-card.stress-med::after { background: var(--gold); transform: scaleX(1); }
-.feed-card.stress-hi::after { background: var(--red); transform: scaleX(1); animation: stressFlash 0.8s ease-in-out infinite; }
+.fc-name-wrap { padding-left: 12px; }
+.fc-sym { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
+.fc-cls { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
-@keyframes stressFlash {
-  0%,100% { opacity:1; }
-  50% { opacity:0.3; }
-}
+.fc-price { font-size: 14px; font-weight: 600; color: var(--text); text-align: right; font-family: var(--font); }
+.fc-chg { font-size: 13px; font-weight: 700; text-align: right; padding: 3px 8px; border-radius: 4px; display: inline-block; }
+.fc-chg.up { color: #10b981; background: rgba(16,185,129,0.1); }
+.fc-chg.dn { color: #ef4444; background: rgba(239,68,68,0.1); }
+.fc-chg.fl { color: var(--muted); background: transparent; }
 
-.fc-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 14px;
-}
-
-.fc-sym { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; color: var(--text); }
-.fc-cls {
-  font-size: 8px; letter-spacing: 2px; color: var(--muted);
-  text-transform: uppercase; margin-top: 3px;
-  border: 1px solid var(--border); padding: 2px 6px;
-}
-
-.fc-price { font-family: var(--font-display); font-size: 22px; letter-spacing: 1px; color: var(--gold); text-align: right; }
-.fc-chg { font-size: 10px; letter-spacing: 1px; text-align: right; margin-top: 2px; }
-.fc-chg.up { color: var(--green); }
-.fc-chg.dn { color: var(--red); }
-.fc-chg.fl { color: var(--muted); }
+.fc-conf { font-size: 10px; color: var(--muted); text-align: right; }
+.fc-sparkline { display: flex; align-items: center; justify-content: flex-end; }
 
 /* CONFIDENCE BAR */
 .conf-wrap { margin-top: 12px; }
@@ -941,6 +944,14 @@ header {
     </div>
   </div>
 
+  <div class="feeds-header">
+    <div></div>
+    <div>Asset</div>
+    <div style="text-align:right">Price</div>
+    <div style="text-align:right">24h Change</div>
+    <div style="text-align:right" class="hide-sm">Confidence</div>
+    <div style="text-align:right" class="hide-sm">7d Chart</div>
+  </div>
   <div class="feeds-grid" id="feedsGrid"></div>
 
 </div>
@@ -1108,7 +1119,23 @@ let FEEDS = [
   {id:'0xf2fb02c32b055c805e7238d628e5e9dadef274376114eb1f012337cabe93871e',sym:'XAG/USD',cls:'Commodity'},
 ];
 
-let data = {}, history = {}, filter = 'all', selectedId = null;
+let data = {}, history = {}, d24h = {}, filter = 'all', selectedId = null;
+
+// Fetch 24h ago prices once on load
+async function fetch24hBaseline() {
+  const ts24h = Math.floor(Date.now() / 1000) - 86400;
+  const params = FEEDS.map(f => 'ids[]=' + f.id).join('&');
+  try {
+    const r = await fetch(`https://hermes.pyth.network/v2/updates/price/${ts24h}?${params}&parsed=true`);
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.parsed) return;
+    d.parsed.forEach(item => {
+      const id = '0x' + item.id;
+      d24h[id] = item.price.price * Math.pow(10, item.price.expo);
+    });
+  } catch {}
+}
 let searchTimeout = null;
 
 // ═══════════════════════════════════════
@@ -1327,11 +1354,58 @@ function filtered() {
 // ═══════════════════════════════════════
 // RENDER CARDS
 // ═══════════════════════════════════════
+// Coin icon colors & symbols map
+const COIN_META = {
+  'BTC': {color:'#F7931A',bg:'rgba(247,147,26,0.15)',icon:'₿'},
+  'ETH': {color:'#627EEA',bg:'rgba(98,126,234,0.15)',icon:'Ξ'},
+  'SOL': {color:'#9945FF',bg:'rgba(153,69,255,0.15)',icon:'◎'},
+  'BNB': {color:'#F3BA2F',bg:'rgba(243,186,47,0.15)',icon:'B'},
+  'XRP': {color:'#00AAE4',bg:'rgba(0,170,228,0.15)',icon:'X'},
+  'USDC':{color:'#2775CA',bg:'rgba(39,117,202,0.15)',icon:'$'},
+  'USDT':{color:'#26A17B',bg:'rgba(38,161,123,0.15)',icon:'₮'},
+  'AVAX':{color:'#E84142',bg:'rgba(232,65,66,0.15)',icon:'A'},
+  'LINK':{color:'#2A5ADA',bg:'rgba(42,90,218,0.15)',icon:'⬡'},
+  'SUI': {color:'#4DA2FF',bg:'rgba(77,162,255,0.15)',icon:'S'},
+  'ATOM':{color:'#6F7390',bg:'rgba(111,115,144,0.15)',icon:'⚛'},
+  'DOT': {color:'#E6007A',bg:'rgba(230,0,122,0.15)',icon:'●'},
+  'LTC': {color:'#BFBBBB',bg:'rgba(191,187,187,0.15)',icon:'Ł'},
+  'POL': {color:'#8247E5',bg:'rgba(130,71,229,0.15)',icon:'P'},
+  'APT': {color:'#00BFA5',bg:'rgba(0,191,165,0.15)',icon:'A'},
+  'GBP': {color:'#CF3064',bg:'rgba(207,48,100,0.15)',icon:'£'},
+  'EUR': {color:'#003399',bg:'rgba(0,51,153,0.15)',icon:'€'},
+  'XAU': {color:'#FFD700',bg:'rgba(255,215,0,0.15)',icon:'Au'},
+  'XAG': {color:'#C0C0C0',bg:'rgba(192,192,192,0.15)',icon:'Ag'},
+  'default':{color:'#9b59f5',bg:'rgba(155,89,245,0.15)',icon:'◆'},
+};
+
+function getCoinMeta(sym) {
+  const base = sym.split('/')[0];
+  return COIN_META[base] || COIN_META['default'];
+}
+
+function miniSparkline(id) {
+  const h = history[id];
+  if (!h || h.length < 2) return '<svg width="70" height="28"></svg>';
+  const pts = h.slice(-20);
+  const min = Math.min(...pts), max = Math.max(...pts);
+  const range = max - min || 1;
+  const W = 70, H = 28;
+  const coords = pts.map((v, i) => {
+    const x = (i / (pts.length - 1)) * W;
+    const y = H - ((v - min) / range) * (H - 4) - 2;
+    return `${x},${y}`;
+  }).join(' ');
+  const isUp = pts[pts.length-1] >= pts[0];
+  const color = isUp ? '#10b981' : '#ef4444';
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <polyline points="${coords}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
 function renderCards() {
   const grid = document.getElementById('feedsGrid');
   const feeds = filtered();
 
-  // Remove cards not in current filter
   const keepIds = new Set(feeds.map(f => 'c' + f.id.slice(2,10)));
   Array.from(grid.children).forEach(c => { if (!keepIds.has(c.id)) c.remove(); });
 
@@ -1344,63 +1418,49 @@ function renderCards() {
       card = document.createElement('div');
       card.id = cid;
       card.className = 'feed-card';
-      card.style.animationDelay = (i * 30) + 'ms';
+      card.style.animationDelay = (i * 20) + 'ms';
       card.onclick = () => openDetail(feed.id);
       grid.appendChild(card);
     }
 
-    if (!d) { card.innerHTML = `<div style="height:100px;background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite"></div>`; return; }
+    if (!d) {
+      card.innerHTML = `<div style="grid-column:1/-1;height:52px;background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite"></div>`;
+      return;
+    }
 
     const pv = d.price * Math.pow(10, d.expo);
     const cv = d.conf * Math.pow(10, d.expo);
     const st = stress(d.conf, d.price);
     const bps = stressBps(d.conf, d.price);
-    const pct = Math.min((d.conf / d.price) * 2000, 100);
+    const meta = getCoinMeta(feed.sym);
 
-    let chgHTML = '<div class="fc-chg fl">—</div>';
-    if (d.prev_price !== null && d.prev_price !== d.price) {
+    // 24h change using stored 24h baseline
+    let chgHTML = '<span class="fc-chg fl">—</span>';
+    const base24 = d24h[feed.id];
+    if (base24) {
+      const chg = ((pv - base24) / base24) * 100;
+      const dir = chg >= 0 ? 'up' : 'dn';
+      const arrow = chg >= 0 ? '▲' : '▼';
+      chgHTML = `<span class="fc-chg ${dir}">${arrow} ${Math.abs(chg).toFixed(2)}%</span>`;
+    } else if (d.prev_price !== null && d.prev_price !== d.price) {
       const prev = d.prev_price * Math.pow(10, d.expo);
       const chg = ((pv - prev) / prev) * 100;
       const dir = chg >= 0 ? 'up' : 'dn';
-      chgHTML = `<div class="fc-chg ${dir}">${chg >= 0 ? '+' : ''}${chg.toFixed(4)}%</div>`;
+      const arrow = chg >= 0 ? '▲' : '▼';
+      chgHTML = `<span class="fc-chg ${dir}">${arrow} ${Math.abs(chg).toFixed(4)}%</span>`;
     }
 
     card.className = `feed-card${st === 'med' ? ' stress-med' : st === 'hi' ? ' stress-hi' : ''}`;
     card.innerHTML = `
-      <div class="fc-top">
-        <div>
-          <div class="fc-sym">${feed.sym}</div>
-          <div class="fc-cls">${feed.cls}</div>
-        </div>
-        <div>
-          <div class="fc-price">$${fmtPrice(d.price, d.expo)}</div>
-          ${chgHTML}
-        </div>
+      <div class="fc-icon" style="background:${meta.bg};color:${meta.color}">${meta.icon}</div>
+      <div class="fc-name-wrap">
+        <div class="fc-sym">${feed.sym}</div>
+        <div class="fc-cls">${feed.cls}</div>
       </div>
-      <div class="conf-wrap">
-        <div class="conf-top">
-          <span class="conf-lbl">Confidence</span>
-          <span class="conf-val">±$${fmtPrice(d.conf, d.expo)}</span>
-        </div>
-        <div class="conf-track">
-          <div class="conf-fill ${st === 'lo' ? '' : st}" style="width:${pct}%"></div>
-        </div>
-        <div class="conf-range">
-          <span>$${fmtPrice(d.price - d.conf, d.expo)}</span>
-          <span>$${fmtPrice(d.price + d.conf, d.expo)}</span>
-        </div>
-      </div>
-      <div class="fc-foot">
-        <div class="fc-meta">
-          <span class="fc-meta-l">Stress</span>
-          <span class="fc-meta-v">${bps} bps</span>
-        </div>
-        <div class="fc-meta">
-          <span class="fc-meta-l">Updated</span>
-          <span class="fc-meta-v">${ago(d.publish_time)}</span>
-        </div>
-        <div class="stress-tag ${st}">${st.toUpperCase()}</div>
-      </div>
+      <div class="fc-price">$${fmtPrice(d.price, d.expo)}</div>
+      <div style="text-align:right">${chgHTML}</div>
+      <div class="fc-conf hide-sm">±$${fmtPrice(d.conf, d.expo)}<br><span style="font-size:9px;color:var(--muted)">${bps} bps</span></div>
+      <div class="fc-sparkline hide-sm">${miniSparkline(feed.id)}</div>
     `;
   });
 }
@@ -1582,7 +1642,9 @@ function genSeedHex(bytes) {
 // INIT
 // ═══════════════════════════════════════
 fetchAll();
-setInterval(fetchAll, 3000);
+fetch24hBaseline();
+setInterval(fetchAll, 5000);
+setInterval(fetch24hBaseline, 300000); // refresh 24h baseline every 5min
 
 // CSS shimmer keyframe
 const style = document.createElement('style');
