@@ -1123,35 +1123,17 @@ let FEEDS = [
 
 let data = {}, history = {}, d24h = {}, filter = 'all', selectedId = null;
 
-// Fetch 24h ago prices via our Vercel proxy (avoids CORS)
 async function fetch24hBaseline() {
   const ts24h = Math.floor(Date.now() / 1000) - 86400;
-  const params = FEEDS.map(f => 'ids[]=' + f.id).join('&');
   try {
-    // Try our proxy with timestamp param
-    const ids24 = FEEDS.map(f => f.id);
-    const p24 = ids24.map(id => 'ids%5B%5D=' + id).join('&');
-    const r = await fetch('/api/prices?' + p24 + '&ts=' + ts24h, { signal: AbortSignal.timeout(8000) });
-    if (r.ok) {
-      const d = await r.json();
-      if (d.parsed) {
-        d.parsed.forEach(item => {
-          const id = '0x' + item.id;
-          d24h[id] = item.price.price * Math.pow(10, item.price.expo);
-        });
-        return;
-      }
-    }
-    // Fallback: direct Hermes historical call
-    const r2 = await fetch(`https://hermes.pyth.network/v2/updates/price/${ts24h}?${params}&parsed=true`, { signal: AbortSignal.timeout(8000) });
-    if (!r2.ok) return;
-    const d2 = await r2.json();
-    if (!d2.parsed) return;
-    d2.parsed.forEach(item => {
-      const id = '0x' + item.id;
-      d24h[id] = item.price.price * Math.pow(10, item.price.expo);
+    const r = await fetch('/api/prices?ts=' + ts24h, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.parsed) return;
+    d.parsed.forEach(item => {
+      d24h['0x' + item.id] = item.price.price * Math.pow(10, item.price.expo);
     });
-  } catch(e) { console.warn('24h baseline failed:', e.message); }
+  } catch(e) { console.warn('24h failed:', e.message); }
 }
 let searchTimeout = null;
 
