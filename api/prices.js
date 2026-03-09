@@ -4,8 +4,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const { type, query, ts } = req.query;
-  const rawIds = req.query['ids[]'];
-  const ids = rawIds ? (Array.isArray(rawIds) ? rawIds : [rawIds]) : [];
 
   try {
     // Search feeds by name
@@ -18,14 +16,26 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, feeds: data });
     }
 
-    if (ids.length === 0) return res.status(400).json({ success: false, error: 'No IDs' });
+    // Parse ids[] from query — works with both ids[] and ids%5B%5D
+    let ids = [];
+    const raw = req.query['ids[]'];
+    if (raw) {
+      ids = Array.isArray(raw) ? raw : [raw];
+    } else {
+      // fallback: parse manually from URL
+      const urlStr = req.url || '';
+      const matches = urlStr.match(/ids(?:\[\]|%5B%5D)=([^&]+)/g) || [];
+      ids = matches.map(m => decodeURIComponent(m.split('=')[1]));
+    }
 
-    const params = ids.map(id => `ids[]=${id}`).join('&');
+    if (ids.length === 0) return res.status(400).json({ success: false, error: 'No IDs provided' });
 
-    // Historical price (for 24h change)
+    const feedParams = ids.map(id => `ids[]=${id}`).join('&');
+
+    // Historical price for 24h change
     if (ts) {
       res.setHeader('Cache-Control', 's-maxage=300');
-      const url = `https://hermes.pyth.network/v2/updates/price/${ts}?${params}&parsed=true`;
+      const url = `https://hermes.pyth.network/v2/updates/price/${ts}?${feedParams}&parsed=true`;
       const r = await fetch(url, { headers: { 'User-Agent': 'PythLens/2.0' } });
       if (!r.ok) { const t = await r.text(); throw new Error(`Hermes ${r.status}: ${t}`); }
       const data = await r.json();
@@ -34,7 +44,7 @@ export default async function handler(req, res) {
 
     // Latest prices
     res.setHeader('Cache-Control', 's-maxage=2, stale-while-revalidate=5');
-    const url = `https://hermes.pyth.network/v2/updates/price/latest?${params}&parsed=true`;
+    const url = `https://hermes.pyth.network/v2/updates/price/latest?${feedParams}&parsed=true`;
     const r = await fetch(url, { headers: { 'User-Agent': 'PythLens/2.0' } });
     if (!r.ok) { const t = await r.text(); throw new Error(`Hermes ${r.status}: ${t}`); }
     const data = await r.json();
