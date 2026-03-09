@@ -56,7 +56,7 @@ body::after {
   inset: 0;
   background-image:
     linear-gradient(rgba(109,40,217,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(109,40,217,0.04) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(109,40,217,0.02) 1px, transparent 1px);
   background-size: 48px 48px;
   pointer-events: none;
   z-index: 0;
@@ -1129,7 +1129,9 @@ async function fetch24hBaseline() {
   const params = FEEDS.map(f => 'ids[]=' + f.id).join('&');
   try {
     // Try our proxy with timestamp param
-    const r = await fetch('/api/prices?' + params + '&ts=' + ts24h, { signal: AbortSignal.timeout(8000) });
+    const ids24 = FEEDS.map(f => f.id);
+    const p24 = ids24.map(id => 'ids%5B%5D=' + id).join('&');
+    const r = await fetch('/api/prices?' + p24 + '&ts=' + ts24h, { signal: AbortSignal.timeout(8000) });
     if (r.ok) {
       const d = await r.json();
       if (d.parsed) {
@@ -1231,8 +1233,8 @@ function switchTab(id, btn) {
 // FETCH / SIMULATE
 // ═══════════════════════════════════════
 async function fetchAll() {
-  // Build proxy URL with dynamic FEEDS list
-  const params = FEEDS.map(f => 'ids[]=' + f.id).join('&');
+  const ids = FEEDS.map(f => f.id);
+  const params = ids.map(id => 'ids[]=' + id).join('&');
   const proxyUrl = '/api/prices?' + params;
   const HERMES = 'https://hermes.pyth.network/v2/updates/price/latest?parsed=true&' + params;
 
