@@ -1214,41 +1214,76 @@ function switchTab(id, btn) {
 // ═══════════════════════════════════════
 // FETCH / SIMULATE
 // ═══════════════════════════════════════
+const HERMES_URL = 'https://hermes.pyth.network/v2/updates/price/latest?ids[]=0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43&ids[]=0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace&ids[]=0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d&ids[]=0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f&ids[]=0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a&ids[]=0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8&ids[]=0x93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7&ids[]=0x8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221&ids[]=0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744&ids[]=0xb00b60f88b03a6a625a8d1c048c3f66653edf217439983d037e7222c4e612819&ids[]=0x6489800bb8974169adfe35937bf6736507097d13c190d760c557108c7e93a81b&ids[]=0xca3eed9b267293f6595901c734c7525ce8ef49adafe8284606ceb307afa2ca5b&ids[]=0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1&ids[]=0x765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2&ids[]=0xf2fb02c32b055c805e7238d628e5e9dadef274376114eb1f012337cabe93871e&parsed=true';
+
+function processParsed(parsed) {
+  parsed.forEach(item => {
+    const id = '0x' + item.id;
+    const prev = data[id];
+    data[id] = {
+      price: item.price.price, conf: item.price.conf, expo: item.price.expo,
+      publish_time: item.price.publish_time,
+      ema_price: item.ema_price.price, ema_expo: item.ema_price.expo,
+      prev_price: prev ? prev.price : null,
+    };
+    pushHistory(id, item.price.price * Math.pow(10, item.price.expo));
+  });
+  document.getElementById('sTime').textContent = new Date().toLocaleTimeString();
+  updateStatus();
+  renderCards();
+  if (selectedId) updateDetail(selectedId);
+}
+
 async function fetchAll() {
+  // Try 1: our Vercel proxy
   try {
-    const r = await fetch('/api/prices', { signal: AbortSignal.timeout(8000) });
-    if (!r.ok) throw new Error('proxy ' + r.status);
-    const d = await r.json();
-    if (!d.success || !d.parsed) throw new Error(d.error || 'no data');
+    const r = await fetch('/api/prices', { signal: AbortSignal.timeout(6000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.success && d.parsed && d.parsed.length > 0) {
+        document.getElementById('dataSourceBadge').textContent = 'PYTH LIVE';
+        document.getElementById('dataSourceBadge').style.color = 'var(--green)';
+        processParsed(d.parsed);
+        return;
+      }
+    }
+  } catch(e) { /* proxy failed, try direct */ }
 
-    document.getElementById('dataSourceBadge').textContent = 'PYTH LIVE';
-    document.getElementById('dataSourceBadge').style.color = 'var(--green)';
+  // Try 2: direct Hermes (works if CORS allowed)
+  try {
+    const r = await fetch(HERMES_URL, { signal: AbortSignal.timeout(6000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.parsed && d.parsed.length > 0) {
+        document.getElementById('dataSourceBadge').textContent = 'PYTH LIVE';
+        document.getElementById('dataSourceBadge').style.color = 'var(--green)';
+        processParsed(d.parsed);
+        return;
+      }
+    }
+  } catch(e) { /* direct failed, try proxy */ }
 
-    d.parsed.forEach(item => {
-      const id = '0x' + item.id;
-      const prev = data[id];
-      data[id] = {
-        price: item.price.price, conf: item.price.conf, expo: item.price.expo,
-        publish_time: item.price.publish_time,
-        ema_price: item.ema_price.price, ema_expo: item.ema_price.expo,
-        prev_price: prev ? prev.price : null,
-      };
-      pushHistory(id, item.price.price * Math.pow(10, item.price.expo));
-    });
+  // Try 3: corsproxy.io fallback
+  try {
+    const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(HERMES_URL), { signal: AbortSignal.timeout(8000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.parsed && d.parsed.length > 0) {
+        document.getElementById('dataSourceBadge').textContent = 'PYTH LIVE';
+        document.getElementById('dataSourceBadge').style.color = 'var(--green)';
+        processParsed(d.parsed);
+        return;
+      }
+    }
+  } catch(e) { /* all failed */ }
 
-    document.getElementById('sTime').textContent = new Date().toLocaleTimeString();
-    updateStatus();
-    renderCards();
-    if (selectedId) updateDetail(selectedId);
-
-  } catch(e) {
-    document.getElementById('dataSourceBadge').textContent = 'SIMULATED';
-    document.getElementById('dataSourceBadge').style.color = 'var(--gold)';
-    simulate();
-    updateStatus();
-    renderCards();
-    if (selectedId) updateDetail(selectedId);
-  }
+  // Fallback: simulation
+  document.getElementById('dataSourceBadge').textContent = 'SIMULATED';
+  document.getElementById('dataSourceBadge').style.color = 'var(--gold)';
+  simulate();
+  updateStatus();
+  renderCards();
+  if (selectedId) updateDetail(selectedId);
 }
 
 const BASE = {
@@ -1854,6 +1889,12 @@ async function checkEntropyStatus() {
 // ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
+// Show simulated data immediately so tokens are visible right away
+simulate();
+updateStatus();
+renderCards();
+
+// Then fetch real data
 fetchAll();
 fetch24hBaseline();
 checkEntropyStatus();
