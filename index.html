@@ -142,19 +142,18 @@ align-items: end;
 
 .hero-title {
 font-family: var(–font-display);
-font-size: clamp(52px, 8vw, 100px);
-line-height: 0.9;
-letter-spacing: 4px;
+font-size: clamp(28px, 5vw, 48px);
+line-height: 1.0;
+letter-spacing: 2px;
 color: var(–gold);
-text-shadow: 0 0 60px rgba(255,180,0,0.2);
 }
 
 .hero-title span {
 display: block;
-color: var(–text);
-font-size: 0.5em;
-letter-spacing: 8px;
-opacity: 0.5;
+color: var(–muted);
+font-size: 0.45em;
+letter-spacing: 4px;
+opacity: 0.8;
 }
 
 .hero-desc {
@@ -867,25 +866,14 @@ white-space: nowrap;
 
 <header>
   <div class="logo">
-    <!-- Pyth Network official logo inline SVG -->
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
-      <circle cx="16" cy="16" r="16" fill="#6D28D9"/>
-      <path d="M10 10h6.5a5.5 5.5 0 0 1 0 11H13v5h-3V10zm3 3v5h3.5a2.5 2.5 0 0 0 0-5H13z" fill="white"/>
-    </svg>
     <div>
       <div class="logo-text">PYTHLENS</div>
       <div class="logo-ver">v2.0 · Hackathon Edition</div>
     </div>
     <div style="display:flex;align-items:center;gap:6px;margin-left:14px;padding-left:14px;border-left:1px solid var(--border2);">
       <span style="font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;font-family:var(--font)">Powered by</span>
-      <!-- Pyth wordmark in SVG -->
-      <svg height="16" viewBox="0 0 80 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text x="0" y="16" font-family="Arial Black, sans-serif" font-weight="900" font-size="16" fill="#6D28D9" letter-spacing="1">PYTH</text>
-      </svg>
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="8" cy="8" r="8" fill="#6D28D9"/>
-        <path d="M5 5h3.25a2.75 2.75 0 0 1 0 5.5H6.5v3H5V5zm1.5 1.5v2.5h1.75a1.25 1.25 0 0 0 0-2.5H6.5z" fill="white"/>
-      </svg>
+      <img src="https://pyth.network/token.svg" height="20" alt="Pyth" style="vertical-align:middle"
+        onerror="this.outerHTML='<span style='font-size:12px;font-weight:900;color:#6D28D9;letter-spacing:1px;font-family:sans-serif'>PYTH</span>'">
     </div>
   </div>
   <div class="header-right">
