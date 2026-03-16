@@ -257,7 +257,7 @@ header{
   <h1>Real-Time <span>Oracle</span><br>Intelligence</h1>
   <p>Institutional-grade price feeds with confidence interval stress detection. Powered by Pyth Network — 500+ feeds from 120+ first-party data providers across 100+ blockchains.</p>
   <div class="stats">
-    <div class="stat-item"><div class="stat-num" id="heroFeeds">28</div><div class="stat-lbl">Live Feeds</div></div>
+    <div class="stat-item"><div class="stat-num" id="heroFeeds">27</div><div class="stat-lbl">Live Feeds</div></div>
     <div class="stat-item"><div class="stat-num">500+</div><div class="stat-lbl">Total Feeds</div></div>
     <div class="stat-item"><div class="stat-num">120+</div><div class="stat-lbl">Publishers</div></div>
   </div>
@@ -373,7 +373,7 @@ header{
 // FEEDS
 // ═══════════════════════════════════
 const FEEDS = [
-  // Crypto — Major
+  // Crypto
   {id:'0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43',sym:'BTC/USD',cls:'Crypto',color:'#F7931A'},
   {id:'0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',sym:'ETH/USD',cls:'Crypto',color:'#627EEA'},
   {id:'0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',sym:'SOL/USD',cls:'Crypto',color:'#9945FF'},
@@ -390,22 +390,19 @@ const FEEDS = [
   {id:'0x3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5',sym:'MATIC/USD',cls:'Crypto',color:'#8247E5'},
   {id:'0x385f64d993f7b77d8182ed5003d97c60aa3361f3cecfe711544d2d59165e9bdf',sym:'OP/USD',cls:'Crypto',color:'#FF0420'},
   {id:'0x9d4294bbcd1174d6f2003ec365831e64cc31d9f6f15a791579a7433a9a9f5af2',sym:'UNI/USD',cls:'Crypto',color:'#FF007A'},
-  {id:'0x846ae1bdb6300b817cee5fdee2a6da192775030db5615b94a465f53bd40850b5',sym:'AAVE/USD',cls:'Crypto',color:'#B6509E'},
-  {id:'0x56a3121958b01f99fdc4e1fd01e81050602c7ace3a3b sources sources sources sources',sym:'ADA/USD',cls:'Crypto',color:'#0033AD'},
   {id:'0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d',sym:'ADA/USD',cls:'Crypto',color:'#0033AD'},
-  {id:'0x67aed5a24fdaa045e4d679af0346e8ec4ea8523ab9e4b5ebcd9fb73a52d31fdb',sym:'APT/USD',cls:'Crypto',color:'#00BFA5'},
+  {id:'0x03ae4db29ed4ae33d323568895aa00337e658e348b37509f5372ae51f0af00d5',sym:'APT/USD',cls:'Crypto',color:'#00BFA5'},
   {id:'0x15add95022ae13563a11992e727c91bdb6b55bc183d9d747436c80a483d8c864',sym:'ARB/USD',cls:'Crypto',color:'#28A0F0'},
   {id:'0x8963217838ab4cf5cadc172203c1f0b763fbaa45f346d8ee50ba994bbcac3026',sym:'TON/USD',cls:'Crypto',color:'#0098EA'},
-  {id:'0x0781209c28fda797616212b7f94d77af3a01f3e94a5d421760aef020cf2bcb51',sym:'TRX/USD',cls:'Crypto',color:'#EF0027'},
+  {id:'0x67aed5a24fdaa045e4d679af0346e8ec4ea8523ab9e4b5ebcd9fb73a52d31fdb',sym:'APE/USD',cls:'Crypto',color:'#0054F7'},
   {id:'0x0a0408d619e9380abad35060f9192039ed5042fa6f82301d0e48bb52be830996',sym:'NEAR/USD',cls:'Crypto',color:'#00C1DE'},
   // FX
   {id:'0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1',sym:'GBP/USD',cls:'FX',color:'#CF3064'},
   {id:'0xa995d00bb36a63cef7fd2c287dc105fc8f3d93779f062f09551b0af3e81ec30',sym:'EUR/USD',cls:'FX',color:'#003399'},
   {id:'0xef2c98c804ba503c6a707e38be4dfbb16683775f195b091252bf24693042fd52',sym:'USD/JPY',cls:'FX',color:'#BC002D'},
-  {id:'0xf2fb02c32b055c805e7238d628e5e9dadef274376114eb1f012337cabe93871e',sym:'XAG/USD',cls:'FX',color:'#C0C0C0'},
   // Commodities
   {id:'0x765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2',sym:'XAU/USD',cls:'Commodity',color:'#FFD700'},
-  {id:'0xff4c1e27f9049c91534af7e91ffbae64e71cc6d6b6d4ead09c4e4e29cd0f3b96',sym:'WTI/USD',cls:'Commodity',color:'#8B4513'},
+  {id:'0xf2fb02c32b055c805e7238d628e5e9dadef274376114eb1f012337cabe93871e',sym:'XAG/USD',cls:'Commodity',color:'#C0C0C0'},
 ];
 
 const LOGOS = {
